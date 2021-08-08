@@ -1,0 +1,21 @@
+[package]
+name = "styx"
+version = "0.1.0"
+edition = "2018"
+description = "Styx compiler and package manager CLI"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+config = "0.11"
+log = "0.4"
+pretty_env_logger = "0.4"
+toml = "0.5"
+
+[dependencies.clap]
+version = "3.0.0-beta.2"
+features = ["std", "suggestions", "color"]
+
+[dependencies.serde]
+version = "1.0"
+features = ["derive"]
