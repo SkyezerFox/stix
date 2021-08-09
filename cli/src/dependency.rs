@@ -1,4 +1,4 @@
-use std::{convert::TryInto, env::current_dir, error::Error, fs, path::PathBuf};
+use std::{env::current_dir, error::Error, fs, path::PathBuf};
 
 use serde::Deserialize;
 
