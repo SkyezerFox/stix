@@ -13,7 +13,10 @@ use pest::{
     prec_climber::{Assoc, Operator, PrecClimber},
     Parser,
 };
-use styxc_ast::{AST, Assignment, AssignmentKind, BinOp, BinOpKind, Block, Declaration, Expr, Ident, Literal, LiteralKind, Loop, Mutability, Span, Stmt, StmtKind};
+use styxc_ast::{
+    Assignment, AssignmentKind, BinOp, BinOpKind, Block, Declaration, Expr, Ident, Literal,
+    LiteralKind, Loop, Mutability, Span, Stmt, StmtKind, AST,
+};
 
 #[derive(Parser)]
 #[grammar = "./grammar.pest"]
@@ -89,55 +92,65 @@ impl StyxParser {
         &mut self,
         pair: Pair<Rule>,
         mutability: Mutability,
-    ) -> Result<Vec<Declaration>, Box<dyn Error>> {
+    ) -> Result<Declaration, Box<dyn Error>> {
+        // This code is related to inline assignemnts and declarations - see https://github.com/SkyezerFox/styx/issues/7.
+        // let mut inner = pair.into_inner();
+        // let mut idents = vec![];
+        // let mut exprs = vec![];
+        // // concatenate all idents
+        // loop {
+        //     let next = inner.next().unwrap();
+        //     if matches!(next.as_rule(), Rule::expression) {
+        //         exprs.push(next);
+        //         break;
+        //     }
+        //     idents.push(next);
+        // }
+        // // concatenate all exprs
+        // while let Some(expr) = inner.next() {
+        //     exprs.push(expr);
+        // }
+        // // panic if mismatching number of exprs and idents
+        // let single_expr = exprs.len() == 1;
+        // if !single_expr && exprs.len() != idents.len() {
+        //     panic!();
+        // }
+        // // iterate over idents and set
+        // let mut index = 0;
+        // let results: Vec<Result<Declaration, Box<dyn Error>>> = idents
+        //     .into_iter()
+        //     .map(|ident| {
+        //         let value = if single_expr {
+        //             &exprs[0]
+        //         } else {
+        //             &exprs[index]
+        //         };
+        //         index += 1;
+        //         Ok(Declaration {
+        //             ident: self.parse_identifier(ident)?,
+        //             mutability,
+        //             value: self.parse_expression(value.clone())?,
+        //         })
+        //     })
+        //     .collect();
+        // // iterate over results and find errors
+        // let mut out = vec![];
+        // for result in results {
+        //     if !result.is_ok() {
+        //         return Err(result.unwrap_err());
+        //     }
+        //     out.push(result.unwrap());
+        // }
+        
         let mut inner = pair.into_inner();
-        let mut idents = vec![];
-        let mut exprs = vec![];
-        // concatenate all idents
-        loop {
-            let next = inner.next().unwrap();
-            if matches!(next.as_rule(), Rule::expression) {
-                exprs.push(next);
-                break;
-            }
-            idents.push(next);
-        }
-        // concatenate all exprs
-        while let Some(expr) = inner.next() {
-            exprs.push(expr);
-        }
-        // panic if mismatching number of exprs and idents
-        let single_expr = exprs.len() == 1;
-        if !single_expr && exprs.len() != idents.len() {
-            panic!();
-        }
-        // iterate over idents and set
-        let mut index = 0;
-        let results: Vec<Result<Declaration, Box<dyn Error>>> = idents
-            .into_iter()
-            .map(|ident| {
-                let value = if single_expr {
-                    &exprs[0]
-                } else {
-                    &exprs[index]
-                };
-                index += 1;
-                Ok(Declaration {
-                    ident: self.parse_identifier(ident)?,
-                    mutability,
-                    value: self.parse_expression(value.clone())?,
-                })
-            })
-            .collect();
-        // iterate over results and find errors
-        let mut out = vec![];
-        for result in results {
-            if !result.is_ok() {
-                return Err(result.unwrap_err());
-            }
-            out.push(result.unwrap());
-        }
-        Ok(out)
+        let ident = inner.next().unwrap();
+        let value = inner.next().unwrap();
+
+        Ok(Declaration {
+            ident: self.parse_identifier(ident)?,
+            mutability,
+            value: self.parse_expression(value)?,
+        })
     }
 
     /// Parse an assignment.
@@ -161,8 +174,8 @@ impl StyxParser {
                 "&=" => AssignmentKind::AndAssign,
                 "|=" => AssignmentKind::OrAssign,
                 "^=" => AssignmentKind::XorAssign,
-                _ => unreachable!()
-            }
+                _ => unreachable!(),
+            },
         })
     }
 
@@ -275,7 +288,7 @@ mod tests {
                 stmts: vec![
                     Stmt {
                         id: 1,
-                        kind: StmtKind::Declaration(vec![Declaration {
+                        kind: StmtKind::Declaration(Declaration {
                             ident: Ident {
                                 id: 0,
                                 name: "x".into(),
@@ -287,7 +300,7 @@ mod tests {
                                 kind: LiteralKind::Int(1),
                                 span: Span(8, 9),
                             })
-                        }])
+                        })
                     },
                     Stmt {
                         id: 3,
@@ -320,7 +333,7 @@ mod tests {
                 modules: vec![],
                 stmts: vec![Stmt {
                     id: 1,
-                    kind: StmtKind::Declaration(vec![Declaration {
+                    kind: StmtKind::Declaration(Declaration {
                         ident: Ident {
                             id: 0,
                             name: "x".into(),
@@ -343,7 +356,7 @@ mod tests {
                             })
                             .into(),
                         })
-                    }])
+                    })
                 }]
             }
         )
@@ -359,7 +372,7 @@ mod tests {
                 modules: vec![],
                 stmts: vec![Stmt {
                     id: 1,
-                    kind: StmtKind::Declaration(vec![Declaration {
+                    kind: StmtKind::Declaration(Declaration {
                         ident: Ident {
                             id: 0,
                             name: "x".into(),
@@ -404,7 +417,7 @@ mod tests {
                             })
                             .into()
                         })
-                    }])
+                    })
                 }]
             }
         )
